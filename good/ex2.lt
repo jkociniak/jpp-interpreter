@@ -1,0 +1,17 @@
+/* Feature 05 */
+int main() {
+  int x ;
+  bool b ;
+  
+  x = 10 ;
+  b = true ;
+
+  while (x > 0) {
+    if (x % 2 == 0) b = !b ;
+    x = x - 1 ;
+  }
+  
+  print(b) ; // should print "false" (no quotes)
+  
+  return 0 ;
+}

@@ -1,0 +1,15 @@
+/* Feature 16 (continue) */
+int main() {
+  int x ;
+  
+  x = 0 ;
+
+  while (x < 10) {
+    if (x % 2 == 0) continue ;
+    x = x + 1 ;
+  }
+
+  print(x) ; // should print 25
+
+  return 0 ;
+}

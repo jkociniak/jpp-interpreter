@@ -1,0 +1,21 @@
+/* Feature 7 */
+void foo_by_val(int x) {
+  x = 5;
+}
+
+void foo_by_ref(int& x) {
+  x = 5;
+}
+
+int main() {
+  int x ;
+  x = 0 ;
+
+  foo_by_val(x) ;
+  print(x) ; // should print 0
+
+  foo_by_ref(x) ;
+  print(x) ; // should print 5
+
+  return 0 ;
+}

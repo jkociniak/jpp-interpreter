@@ -1,0 +1,11 @@
+/* Feature 10 */
+int main() {
+  int x ;
+  int y ;
+  y = 5 ;
+  x = 0 ;
+  
+  print(y/x) ; // runtime error! should print "Error: division by zero"
+
+  return 0 ;
+}

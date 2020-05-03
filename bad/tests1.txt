@@ -1,0 +1,53 @@
+/* Tests functionalities 01-04 */
+int main () { 
+  int number ;
+  int number2 ;
+  int number3 ;
+  int number4 ;
+  string hello ;
+  bool relation ;
+
+  number = 16 * 10 ;
+  print(number) ; // should print 160
+  
+  number2 = 16 / 2;
+  print(number2) ; // should print 8
+  
+  number3 = -10 ;
+  print(number3) ; // should print -10
+  
+  number4 =  (number - number2 + number3) % 100 ; // should be 42
+  print(number4) ; // should print 42
+
+  relation = number > number2 ; 
+  print(relation) ; // should print true
+
+  relation = number > number ;
+  print(relation) ; // should print false
+
+  relation = number < number ;
+  print(relation) ; // should print false
+
+  relation = number <= number ;
+  print(relation) ; // should print true
+
+  relation = number >= number ;
+  print(relation) ; // should print true
+
+  relation = !relation ;
+  print(relation) ; // should print false
+
+  print(relation && !relation) ; // should print false
+  print(relation || !relation) ; // should print true
+
+  relation = true ;
+  print(relation) ; // should print 'true'
+
+  relation = false ;
+  print(relation) ; // should print 'false'
+
+  hello = "Hello world" ;
+  print("Hello world") ; // should print 'Hello world' with no quotes
+
+  return 0 ;
+}

@@ -1,0 +1,4 @@
+better error printing:
+- add position printing
+- add verbose error messages
+- MainFnCall ?

@@ -1,0 +1,16 @@
+/* Feature 13 */
+void foo() {
+  print("foo") ;
+  return ;
+}
+
+int main() {
+  void foo() {
+    print("bar") ;
+    return ;
+  }
+  
+  foo() ; // should print "bar" (static binding)
+
+  return 0 ;
+}

@@ -1,0 +1,16 @@
+/* Feature 16 (break) */
+int main() {
+  int x ;
+  bool b ;
+
+  x = 10 ;
+
+  while (x > 0) {
+    if (x == 5) break ;
+    x = x - 1 ;
+  }
+
+  print(x) ; // should print 5
+
+  return 0 ;
+}

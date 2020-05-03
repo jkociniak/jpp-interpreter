@@ -1,0 +1,19 @@
+/* Feature 9 */
+int x ;
+
+void set_x() {
+  x = 1 ;
+  return ;
+}
+
+int main() {
+  int x ;
+  x = 5 ;
+
+  print(x) ; // should print 5
+
+  set_x() ;
+  print(x) ; // should still print 5 (static binding)
+
+  return 0 ;
+}
