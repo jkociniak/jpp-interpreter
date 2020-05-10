@@ -13,7 +13,7 @@ int main() {
   x = 5 ;
   res = fib(x) ;
   
-  print(res) ; // should print 3
+  print(res) ; // should print 5
 
   return 0 ;
 }

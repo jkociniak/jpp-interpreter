@@ -28,10 +28,13 @@ type FnType = (PrimitiveType, [PrimitiveType])
 mainFnSig :: FnType
 mainFnSig = (IntType, [])
 
+showListOfPrimitiveTypes :: [PrimitiveType] -> String
+showListOfPrimitiveTypes types = "(" ++ typesStr ++ ")" where 
+    typesStr = intercalate "," $ map show types
+
 showFnType :: FnType -> String
 showFnType (retType, argTypes) =
-    show retType ++ " (" ++ argTypesStr ++ ")" where 
-        argTypesStr = intercalate "," $ map show argTypes
+    show retType ++ " " ++ showListOfPrimitiveTypes argTypes
 
 -- both statements and expressions have return type
 -- statement return types correspond to possible returns inside function body
@@ -55,27 +58,27 @@ type StmtReturnType = Maybe PrimitiveType
 type VTEnv = Map.Map Var (PrimitiveType, Depth)
 type FTEnv = Map.Map Fn (FnType, Depth)
 
-data SCError = UndeclaredFn
-             | UndeclaredVar 
+data SCError = UndeclaredFn Fn Position
+             | UndeclaredVar Var Position
              | DoubleVarDecl Var Position
              | DoubleFnDecl Fn Position
-             | MismatchedArgCount
-             | WrongFnArgType
-             | WrongAssignmentType
-             | InterruptOutsideLoop
-             | WrongWhileCondType
-             | WrongIfCondType
-             | NonVoidReturnInVoidFn
-             | VoidReturnInNonVoidFn
-             | BlockAmbiguousReturnType
-             | IfAmbiguousReturnType
-             | WrongReturnType
+             | MismatchedArgCount Fn Int Int Position
+             | WrongFnArgType Fn [PrimitiveType] [PrimitiveType] Position
+             | WrongAssignmentType Var PrimitiveType PrimitiveType Position
+             | InterruptOutsideLoop Position
+             | WrongWhileCondType PrimitiveType Position
+             | WrongIfCondType PrimitiveType Position
+             | NonVoidReturnInVoidFn Fn PrimitiveType -- TODO position printing
+             | VoidReturnInNonVoidFn Fn PrimitiveType -- TODO position printing
+             | BlockAmbiguousReturnType -- TODO position printing
+             | IfAmbiguousReturnType -- TODO position printing
+             | WrongReturnType Fn PrimitiveType PrimitiveType -- TODO position printing
              | WrongMainFnSig FnType
              | NoMainFn
-             | VoidTypeToPrint
-             | NotIntUsedWithIntOp
-             | NotBoolUsedWithBoolOp
-             | VoidExprInNonVoidReturn
+             | VoidTypeToPrint Position
+             | NotIntUsedWithIntOp PrimitiveType Position
+             | NotBoolUsedWithBoolOp PrimitiveType Position
+             | VoidExprInNonVoidReturn Position
 
 instance Show SCError where
     show (WrongMainFnSig sig) =
@@ -85,12 +88,38 @@ instance Show SCError where
         "Double declaration of variable with name '" ++ showIdent var ++ "' at " ++ showPos pos 
     show (DoubleFnDecl fn pos) =
         "Double declaration of function with name '" ++ showIdent fn ++ "' at " ++ showPos pos 
-    -- show (UndeclaredVar var pos) =
-    --     "Reference to undeclared variable with name '" ++ showIdent var ++ "' at " ++ showPos pos 
-    -- show (UndeclaredFn fn pos) =
-    --     "Reference to undeclared function with name '" ++ showIdent fn ++ "' at " ++ showPos pos
+    show (UndeclaredVar var pos) =
+        "Reference to undeclared variable with name '" ++ showIdent var ++ "' at " ++ showPos pos 
+    show (UndeclaredFn fn pos) =
+        "Reference to undeclared function with name '" ++ showIdent fn ++ "' at " ++ showPos pos
+    show (MismatchedArgCount fn len targetLen pos) =
+        "Mismatched argument count when calling function with name '" ++ showIdent fn 
+        ++ "': got " ++ show len ++ " instead of " ++ show targetLen ++ " args at " ++ showPos pos 
+    show (WrongFnArgType fn types targetTypes pos) =
+        "Wrong argument types when calling function with name '" ++ showIdent fn 
+        ++ "': got " ++ showListOfPrimitiveTypes types ++ " instead of " ++ showListOfPrimitiveTypes targetTypes ++ " at " ++ showPos pos
+    show (WrongAssignmentType var t targetT pos) =
+        "Wrong expression type in assignment to variable with name '" ++ showIdent var
+        ++ "': got " ++ show t ++ " instead of " ++ show targetT ++ " at " ++ showPos pos
+    show (InterruptOutsideLoop pos) = "Break or continue outside of loop at " ++ showPos pos
+    show (WrongWhileCondType t pos) = "Non-boolean expression in while loop condition: got " ++ show t ++ " at " ++ showPos pos
+    show (WrongIfCondType t pos) = "Non-boolean expression in if condition: got " ++ show t ++ " at " ++ showPos pos
+    show (NotIntUsedWithIntOp t pos) = "Non-integer expression used with integer operator: got " ++ show t ++ " at " ++ showPos pos
+    show (NotBoolUsedWithBoolOp t pos) = "Non-boolean expression used with boolean operator: got " ++ show t ++ " at " ++ showPos pos
+    show (VoidTypeToPrint pos) = "Void expression used with print statement at " ++ showPos pos
+    show (VoidExprInNonVoidReturn pos) = "Void expression used with non-void return statement at " ++ showPos pos
+    show (NonVoidReturnInVoidFn fn t) = "Non-void return in function of type void with name '" ++ showIdent fn
+        ++ "': got " ++ show t ++ " instead of void"
+    show (VoidReturnInNonVoidFn fn targetT) = "Void return in function of non-void type with name '" ++ showIdent fn
+        ++ "': got void instead of " ++ show targetT
+    show BlockAmbiguousReturnType = "Different possible return types in block statement"
+    show IfAmbiguousReturnType = "Different possible return types in if statement"
+    show (WrongReturnType fn t targetT) = "Wrong return type in function with name '" ++ showIdent fn 
+        ++ "': got " ++ show t ++ " instead of " ++ show targetT
 
 data TEnv = Env { venv :: VTEnv, fenv :: FTEnv, depth :: Depth, loop :: Bool } deriving Show
+
+emptyTEnv :: TEnv
 emptyTEnv = Env Map.empty Map.empty 0 False
 
 type SCResult = ExceptT SCError IO
@@ -124,59 +153,51 @@ setLoopFalse (Env venv fenv d _) = Env venv fenv d False
 setLoopTrue :: TEnv -> TEnv
 setLoopTrue (Env venv fenv d _) = Env venv fenv d True
 
-argToType :: Arg Position -> Type Position
-argToType (ValArg _ t _) = t
-argToType (RefArg _ t _) = t
-
-argToVarDecl :: Arg Position -> Decl Position
-argToVarDecl (ValArg p t i) = VarDecl p t i
-argToVarDecl (RefArg p t i) = VarDecl p t i
-
-checkVar :: Var -> SC PrimitiveType
-checkVar varIdent = do
+checkVar :: Position -> Var -> SC PrimitiveType
+checkVar pos varIdent = do
     env <- ask
     case Map.lookup varIdent (venv env) of
-        Nothing -> lift $ throwError UndeclaredVar
+        Nothing -> lift $ throwError $ UndeclaredVar varIdent pos
         Just (t, _) -> return t
 
-checkFn :: Fn -> SC FnType
-checkFn fnIdent = do
+checkFn :: Position -> Fn -> SC FnType
+checkFn pos fnIdent = do
     env <- ask
     case Map.lookup fnIdent (fenv env) of
-        Nothing -> lift $ throwError UndeclaredFn
+        Nothing -> lift $ throwError $ UndeclaredFn fnIdent pos
         Just (t, _) -> return t
 
-checkApp :: Fn -> [Expr Position] -> SC PrimitiveType
-checkApp fnIdent args = do
-    (retType, argTargetTypes) <- checkFn fnIdent
+checkApp :: Position -> Fn -> [Expr Position] -> SC PrimitiveType
+checkApp pos fnIdent args = do
+    (retType, argTargetTypes) <- checkFn pos fnIdent
     argTypes <- mapM checkExpr args
     if not (length argTypes == length argTargetTypes)
-        then lift $ throwError MismatchedArgCount
+        then lift $ throwError $ MismatchedArgCount fnIdent (length argTypes) (length argTargetTypes) pos
         else if not (argTypes == argTargetTypes)
-            then lift $ throwError WrongFnArgType
+            then lift $ throwError $ WrongFnArgType fnIdent argTypes argTargetTypes pos
             else return retType
 
 checkIntOp :: Expr Position -> SC ()
 checkIntOp expr = do
     exprType <- checkExpr expr
     if not (exprType == IntType)
-        then lift $ throwError NotIntUsedWithIntOp
+        then lift $ throwError $ NotIntUsedWithIntOp exprType (getExprPos expr)
         else return ()
 
 checkBoolOp :: Expr Position -> SC ()
 checkBoolOp expr = do
     exprType <- checkExpr expr
     if not (exprType == BoolType)
-        then lift $ throwError NotBoolUsedWithBoolOp
+        then lift $ throwError $ NotBoolUsedWithBoolOp exprType (getExprPos expr)
         else return ()
 
 checkExpr :: Expr Position -> SC PrimitiveType
 checkExpr expr = case expr of
-    EVar _ varIdent -> checkVar varIdent
+    EVar pos varIdent -> checkVar pos varIdent
     ELitInt _ _ -> return IntType
     ELitTrue _ -> return BoolType
     ELitFalse _ -> return BoolType
-    EApp _ fnIdent args -> checkApp fnIdent args
+    EApp pos fnIdent args -> checkApp pos fnIdent args
     EString _ _ -> return StringType
     Neg _ expr -> checkIntOp expr >> return IntType
     Not _ expr -> checkBoolOp expr >> return BoolType
@@ -186,26 +207,26 @@ checkExpr expr = case expr of
     EAnd _ expr1 expr2 -> checkBoolOp expr1 >> checkBoolOp expr2 >> return BoolType
     EOr _ expr1 expr2 -> checkBoolOp expr1 >> checkBoolOp expr2 >> return BoolType
 
-checkAss :: Var -> Expr Position -> SC ()
-checkAss varIdent expr = do
-    varType <- checkVar varIdent
+checkAss :: Position -> Var -> Expr Position -> SC ()
+checkAss pos varIdent expr = do
+    varType <- checkVar pos varIdent
     exprType <- checkExpr expr
     if not (varType == exprType)
-        then lift $ throwError WrongAssignmentType
+        then lift $ throwError $ WrongAssignmentType varIdent exprType varType pos
         else return ()
 
 checkCond :: Expr Position -> Stmt Position -> SC StmtReturnType
 checkCond expr stmt = do
     exprType <- checkExpr expr
     if not (exprType == BoolType)
-        then lift $ throwError WrongIfCondType
+        then lift $ throwError $ WrongIfCondType exprType (getExprPos expr)
         else checkStmt stmt
 
 checkCondElse :: Expr Position -> Stmt Position -> Stmt Position -> SC StmtReturnType
 checkCondElse expr stmt1 stmt2 = do
     exprType <- checkExpr expr
     if not (exprType == BoolType)
-        then lift $ throwError WrongIfCondType
+        then lift $ throwError $ WrongIfCondType exprType (getExprPos expr)
         else do
             retType1 <- checkStmt stmt1
             retType2 <- checkStmt stmt2
@@ -216,34 +237,37 @@ checkCondElse expr stmt1 stmt2 = do
                     then return retType1
                     else lift $ throwError IfAmbiguousReturnType
 
+
+
 checkWhile :: Expr Position -> Stmt Position -> SC StmtReturnType
 checkWhile expr stmt = do
     exprType <- checkExpr expr
     if not (exprType == BoolType)
-        then lift $ throwError WrongWhileCondType
+        then lift $ throwError $ WrongWhileCondType exprType (getExprPos expr)
         else do
             env <- ask    
             local (const $ setLoopTrue env) (checkStmt stmt)
 
 checkInterrupt :: Inter Position -> SC ()
-checkInterrupt _ = do
+checkInterrupt inter = do
     env <- ask
+    let pos = getInterPos inter
     if loop env
         then return ()
-        else lift $ throwError InterruptOutsideLoop
+        else lift $ throwError $ InterruptOutsideLoop pos
 
 checkPrint :: Expr Position -> SC ()
 checkPrint expr = do
     exprType <- checkExpr expr
     if exprType == VoidType
-        then lift $ throwError VoidTypeToPrint
+        then lift $ throwError $ VoidTypeToPrint (getExprPos expr)
         else return ()
 
 checkRet :: Expr Position -> SC StmtReturnType
 checkRet expr = do
     exprType <- checkExpr expr
     if exprType == VoidType
-        then lift $ throwError VoidExprInNonVoidReturn
+        then lift $ throwError $ VoidExprInNonVoidReturn (getExprPos expr)
         else return $ Just exprType
 
 checkStmt :: Stmt Position -> SC StmtReturnType
@@ -252,7 +276,7 @@ checkStmt stmt = case stmt of
     BStmt _ block -> do
         env <- ask  
         local (const $ incrDepth env) (checkBlock block)
-    Ass _ varIdent expr -> checkAss varIdent expr >> return Nothing
+    Ass pos varIdent expr -> checkAss pos varIdent expr >> return Nothing
     Ret _ expr -> checkRet expr
     VRet _ -> return $ Just VoidType
     Cond _ expr stmt -> checkCond expr stmt
@@ -273,14 +297,14 @@ checkBlock (Blk _ decls stmts) = do
             then return $ head stmtReturns
             else lift $ throwError BlockAmbiguousReturnType 
     
-checkRetType :: PrimitiveType -> PrimitiveType -> SC ()
-checkRetType VoidType retType = 
-    if retType == VoidType then return () else lift $ throwError NonVoidReturnInVoidFn
+checkRetType :: Fn -> PrimitiveType -> PrimitiveType -> SC ()
+checkRetType fnIdent retType VoidType = 
+    if retType == VoidType then return () else lift $ throwError $ NonVoidReturnInVoidFn fnIdent retType
 
-checkRetType targetRetType VoidType = lift $ throwError VoidReturnInNonVoidFn
+checkRetType fnIdent VoidType targetRetType = lift $ throwError $ VoidReturnInNonVoidFn fnIdent targetRetType
 
-checkRetType targetRetType retType =
-    if retType == targetRetType then return () else lift $ throwError WrongReturnType
+checkRetType fnIdent retType targetRetType =
+    if retType == targetRetType then return () else lift $ throwError $ WrongReturnType fnIdent retType targetRetType
 
 checkDecl :: Decl Position -> SC TEnv
 checkDecl (VarDecl pos varType varIdent) = do
@@ -302,10 +326,9 @@ checkDecl (FnDecl pos retType fnIdent args block) = do
     let localEnvInit = setLoopFalse $ incrDepth envWithFnName
     localEnv <- local (const localEnvInit) (checkDecls $ map argToVarDecl args)
     blockRetType <- local (const localEnv) (checkBlock block)
-    checkRetType (readType retType) (fromMaybe VoidType blockRetType)
+    checkRetType fnIdent (fromMaybe VoidType blockRetType) (readType retType) 
     return envWithFnName
     
-
 checkDecls :: [Decl Position] -> SC TEnv
 checkDecls [] = ask
 checkDecls (decl:decls) = do
