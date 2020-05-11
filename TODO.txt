@@ -1,3 +1,0 @@
-- add position printing in couple of cases in static check and interpreter
-- break/continue in interpreter
-- lvalue check in fn call in static check
