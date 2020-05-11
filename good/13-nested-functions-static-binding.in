@@ -10,7 +10,7 @@ int main() {
     return ;
   }
   
-  foo() ; // should print "bar" (static binding)
+  foo() ; // should print "bar" (no quotes) (static binding)
 
   return 0 ;
 }

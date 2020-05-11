@@ -1,0 +1,173 @@
+/* Features 01-04 */
+int ii(int x) {
+  return x + 1;
+}
+
+bool bi(int x) {
+  return x > 1;
+}
+
+string si(int x) {
+  return "x";
+}
+
+void vi(int x) {
+  x = x + x;
+}
+
+int ib(bool b) {
+  if (!b) {
+    return 1;
+  }
+  return 2;
+}
+
+bool bb(bool b) {
+  return !b;
+}
+
+string sb(bool b) {
+  if (b) {
+    return "ala";
+  }
+  else {
+    return "tomek";
+  }
+}
+
+void vb(bool b) {
+  b = !b;
+}
+
+int is(string s) {
+  return 2;
+}
+
+bool bs(string s) {
+  return true;
+}
+
+string ss(string s) {
+  return s;
+}
+
+void vs(string s) {
+  s = "42";
+}
+
+int iv () {
+  return 1;
+}
+
+bool bv () {
+  return true;
+}
+
+string sv () {
+  return "void";
+}
+
+void vv () {
+  2 + 2;
+}
+
+void test1() {
+  int x;
+  bool b;
+  string s;
+
+  x = 1;
+  b = true;
+  s = "cat";
+
+  print("Test1:")
+  print(ii(x)); // should print 2
+  print(bi(x)); // should print "False" (no quotes)
+  print(si(x)); // should print "x" (no quotes)
+  vi(x);
+  print(ib(b)); // should print 2
+  print(bb(b)); // should print "False" (no quotes)
+  print(sb(b)); // should print "ala" (no quotes)
+  vb(b);
+  print(is(s)); // should print 2
+  print(bs(s)); // should print "True" (no quotes)
+  print(ss(s)); // should print "cat" (no quotes)
+  vs(s);
+  print(iv()); // should print 1
+  print(bv()); // should print "True" (no quotes)
+  print(sv()); // should print "void" (no quotes)
+  vv();
+}
+
+void test2() {
+  int x;
+  string s;
+  bool b;
+
+  x = (5 * 10 - 20 / 2) % 11;
+  s = "Hello";
+  b = !(x == 7);
+
+  print("Test2:")
+  print(x); // should print 7
+  print(s); // should print "Hello" (no quotes)
+  print(b); // should print "False" (no quotes)
+}
+
+void test3() {
+  int number ;
+  int number2 ;
+  int number3 ;
+  int number4 ;
+  string hello ;
+  bool relation ;
+
+  number = 16 * 10 ;
+  print(number) ; // should print 160
+  
+  number2 = 16 / 2;
+  print(number2) ; // should print 8
+  
+  number3 = -10 ;
+  print(number3) ; // should print -10
+  
+  number4 =  (number - number2 + number3) % 100 ;
+  print(number4) ; // should print 42
+
+  relation = number > number2 ; 
+  print(relation) ; // should print "True" (no quotes)
+
+  relation = number > number ;
+  print(relation) ; // should print "False" (no quotes)
+
+  relation = number < number ;
+  print(relation) ; // should print "False" (no quotes)
+
+  relation = number <= number ;
+  print(relation) ; // should print "True" (no quotes)
+
+  relation = number >= number ;
+  print(relation) ; // should print "True" (no quotes)
+
+  relation = !relation ;
+  print(relation) ; // should print "False" (no quotes)
+
+  print(relation && !relation) ; // should print "False" (no quotes)
+  print(relation || !relation) ; // should print "True" (no quotes)
+
+  relation = true ;
+  print(relation) ; should print "True" (no quotes)
+
+  relation = false ;
+  print(relation) ; // should print "False" (no quotes)
+
+  hello = "Hello world" ;
+  print("Hello world") ; // should print "Hello world" (no quotes)
+}
+
+int main() {
+  test1();
+  test2();
+  test3();
+  return 0;
+}

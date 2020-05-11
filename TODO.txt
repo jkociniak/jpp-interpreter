@@ -1,4 +1,3 @@
-better error printing:
-- add position printing
-- add verbose error messages
-- MainFnCall ?
+- add position printing in couple of cases in static check and interpreter
+- break/continue in interpreter
+- lvalue check in fn call in static check

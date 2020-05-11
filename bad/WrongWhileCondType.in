@@ -1,0 +1,6 @@
+int main() {
+  while (2 + 2) {
+    print(4);
+  }
+  return 0;
+}

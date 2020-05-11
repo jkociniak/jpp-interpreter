@@ -59,7 +59,7 @@ instance Show RuntimeError where
     show (DivisionByZero pos) = "Expression at " ++ showPos pos ++ " evaluated to 0 while trying to divide by it"
     show (NoReturn fn pos) = "Call of non-void function with name '" ++ showIdent fn ++ 
         "' defined at " ++ showPos pos ++ " reached end with no return"
-    show (NotAnLValue pos) = "Expresssion at " ++ showPos pos ++ " is not an lvalue and couldn't be passed by reference"
+    show (NotAnLValue pos) = "Expression at " ++ showPos pos ++ " is not an lvalue and couldn't be passed by reference"
 
 type IResult = ExceptT RuntimeError IO
 
@@ -230,7 +230,7 @@ interpretWhile expr stmt = do
 interpretPrint :: Expr Position -> Interpreter ()
 interpretPrint expr = do
     exprVal <- evalExpr expr
-    liftIO $ putStr $ show exprVal -- proper type of expression should be checked by static check
+    liftIO $ putStrLn $ show exprVal -- proper type of expression should be checked by static check
     return ()
 
 interpretStmt :: Stmt Position -> Interpreter StmtReturn

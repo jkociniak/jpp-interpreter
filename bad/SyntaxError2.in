@@ -1,0 +1,4 @@
+void main () {
+  int x  // no comma
+  2 + 2;
+}

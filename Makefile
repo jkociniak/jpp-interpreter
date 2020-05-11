@@ -1,4 +1,7 @@
 all:
+	ghc --make run_interpreter.hs -o interpreter
+
+with_parser_and_lexer:
 	happy -gca ParGrammar.y
 	alex -g LexGrammar.x
 	ghc --make run_interpreter.hs -o interpreter

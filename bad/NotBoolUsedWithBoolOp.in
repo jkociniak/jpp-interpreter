@@ -1,0 +1,6 @@
+int main() {
+    bool b;
+    b = b && 2;
+
+    return 0;
+}

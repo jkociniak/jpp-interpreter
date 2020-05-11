@@ -1,0 +1,8 @@
+void foo() {
+    print("hello");
+}
+
+int main() {
+    print(foo());
+    return 0;
+}
